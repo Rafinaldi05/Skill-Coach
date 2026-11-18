@@ -1,0 +1,48 @@
+{
+  "name": "@skill-coach/api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "test": "vitest run",
+    "worker": "tsx src/jobs/review-worker.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "start:worker": "node dist/jobs/review-worker.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.922.0",
+    "@aws-sdk/s3-request-presigner": "^3.922.0",
+    "@prisma/client": "^6.19.0",
+    "argon2": "^0.44.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "jose": "^6.1.0",
+    "openai": "^6.9.0",
+    "pdf-parse": "^2.4.5",
+    "pg-boss": "^10.3.2",
+    "pino": "^9.14.0",
+    "pino-http": "^10.5.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.0",
+    "@types/supertest": "^7.2.1",
+    "prettier": "^3.9.10",
+    "prisma": "^6.19.0",
+    "supertest": "^7.3.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  },
+  "type": "module"
+}

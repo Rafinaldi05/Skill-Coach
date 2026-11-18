@@ -1,0 +1,29 @@
+# Dependencies & Package Manager
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# Monorepo & Build Outputs
+.turbo/
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Isolasi Backend (Fokus Frontend Saja)
+apps/api/
+
+# Environment, Logs & Git
+.env
+.env.*
+*.log
+.git/
+
+# Media, Assets & Dokumen
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico

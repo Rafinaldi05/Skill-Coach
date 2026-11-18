@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@layer base {
+  body { margin: 0; }
+  .landing-page { font-family: "Segoe UI", Arial, sans-serif; }
+  .landing-page :where(a, summary, [tabindex]):focus-visible {
+    outline: 3px solid #5044b8;
+    outline-offset: 5px;
+  }
+  .landing-page :where(section, article) { min-width: 0; }
+}

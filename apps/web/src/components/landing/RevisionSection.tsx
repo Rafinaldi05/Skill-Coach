@@ -1,0 +1,4 @@
+import { CoffeePreview, SectionHeading } from "./shared";
+export function RevisionSection() {
+  return <section id="revisi" className="scroll-mt-8 pb-12"><SectionHeading label="04 / Perubahan kecil, makna besar">Lihat revisimu bercerita.</SectionHeading><div className="grid gap-6 md:grid-cols-2">{[true, false].map(before => <figure key={String(before)}><p className={`mb-3 text-xs font-semibold ${before ? "text-stone-500" : "text-emerald-700"}`}>{before ? "v1 · 4 Nov · 6,0 / 10" : "v2 · 6 Nov · 8,0 / 10"} <span className="font-normal">· contoh</span></p><CoffeePreview before={before} /><figcaption className="mt-4 text-sm leading-relaxed text-stone-500">{before ? "CTA masih umum dan kontras teks perlu ditingkatkan." : "CTA lebih spesifik, teks terbaca, dan hierarki lebih terarah."}</figcaption></figure>)}</div></section>;
+}

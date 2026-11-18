@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SkillField {
+  UI_UX
+  SOFTWARE_ENGINEERING
+  WRITING
+}
+
+enum SkillType {
+  UI
+  CODE
+  ESSAY
+}
+
+enum CritiqueTone {
+  FRIENDLY
+  STANDARD
+  BLUNT
+}
+
+enum VersionStatus {
+  QUEUED
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model User {
+  id           String           @id @default(uuid()) @db.Uuid
+  email        String           @unique @db.VarChar(255)
+  username     String           @unique @db.VarChar(50)
+  passwordHash String           @map("password_hash")
+  displayName  String           @map("display_name")
+  skillField   SkillField?      @map("skill_field")
+  level        String?          @db.VarChar(50)
+  critiqueTone CritiqueTone     @default(STANDARD) @map("critique_tone")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  projects     Project[]
+  tokens       RefreshToken[]
+  quotas       UsageQuota[]
+  feedbacks    ReviewFeedback[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  title       String    @db.VarChar(150)
+  description String?   @db.Text
+  goal        String?   @db.Text
+  skillType   SkillType @map("skill_type")
+  visibility  String    @default("PRIVATE")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions    Version[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Version {
+  id            String        @id @default(uuid()) @db.Uuid
+  projectId     String        @map("project_id") @db.Uuid
+  versionNumber Int           @map("version_number")
+  fileKey       String?       @map("file_key")
+  fileType      String?       @map("file_type")
+  textContent   String?       @map("text_content") @db.Text
+  status        VersionStatus @default(QUEUED)
+  errorMessage  String?       @map("error_message") @db.Text
+  createdAt     DateTime      @default(now()) @map("created_at")
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  review        Review?
+
+  @@unique([projectId, versionNumber])
+  @@index([projectId, versionNumber])
+  @@map("versions")
+}
+
+model Review {
+  id            String           @id @default(uuid()) @db.Uuid
+  versionId     String           @unique @map("version_id") @db.Uuid
+  summary       String           @db.Text
+  scores        Json             @db.JsonB
+  strengths     Json             @db.JsonB
+  improvements  Json             @db.JsonB
+  nextSteps     Json             @map("next_steps") @db.JsonB
+  comparison    Json?            @db.JsonB
+  model         String
+  promptVersion String           @map("prompt_version")
+  tokensIn      Int              @default(0) @map("tokens_in")
+  tokensOut     Int              @default(0) @map("tokens_out")
+  costEstimate  Decimal          @default(0) @map("cost_estimate") @db.Decimal(12, 6)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  version       Version          @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  feedbacks     ReviewFeedback[]
+
+  @@map("reviews")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model UsageQuota {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  periodStart DateTime @map("period_start") @db.Date
+  usedCount   Int      @default(0) @map("used_count")
+  limitCount  Int      @default(10) @map("limit_count")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodStart])
+  @@map("usage_quota")
+}
+
+model ReviewFeedback {
+  id        String   @id @default(uuid()) @db.Uuid
+  reviewId  String   @map("review_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  helpful   Boolean
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+  @@map("review_feedback")
+}

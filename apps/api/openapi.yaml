@@ -1,0 +1,221 @@
+openapi: 3.1.0
+info:
+  title: Skill Coach API
+  version: 1.0.0
+  description: API untuk akun, proyek, submission, review, dan portofolio Skill Coach.
+servers:
+  - url: http://localhost:3000
+    description: Development
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      security: []
+      summary: Periksa kesehatan API dan database
+      responses:
+        "200": { description: Dependencies available }
+        "503": { $ref: "#/components/responses/Error" }
+  /auth/register:
+    post:
+      security: []
+      summary: Buat akun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, username, password, displayName]
+              properties:
+                email: { type: string, format: email, maxLength: 255 }
+                username: { type: string, minLength: 3, maxLength: 50 }
+                password: { type: string, minLength: 10, maxLength: 128 }
+                displayName: { type: string, minLength: 1, maxLength: 100 }
+      responses:
+        "201": { description: Account and tokens created }
+        "422": { $ref: "#/components/responses/Error" }
+  /auth/login:
+    post:
+      security: []
+      summary: Masuk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200": { description: Access and refresh tokens }
+        "401": { $ref: "#/components/responses/Error" }
+  /auth/refresh:
+    post:
+      security: []
+      summary: Rotasi refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        "200": { description: Rotated tokens }
+        "401": { $ref: "#/components/responses/Error" }
+  /me:
+    get:
+      summary: Ambil profil sendiri
+      responses:
+        "200": { description: User profile }
+    patch:
+      summary: Perbarui profil sendiri
+      responses:
+        "200": { description: Updated user profile }
+  /me/quota:
+    get:
+      summary: Ambil kuota review bulan ini
+      responses:
+        "200": { description: Usage and reset date }
+  /uploads/presign:
+    post:
+      summary: Buat presigned PUT URL (Content-Type dan Content-Length ditandatangani)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fileName, contentType, size]
+              properties:
+                fileName: { type: string, maxLength: 200 }
+                contentType:
+                  type: string
+                  enum: [image/png, image/jpeg, image/webp, text/plain, application/pdf]
+                size: { type: integer, minimum: 1, maximum: 5242880 }
+      responses:
+        "200": { description: Upload URL, key, and required headers }
+        "422": { $ref: "#/components/responses/Error" }
+  /projects:
+    get:
+      summary: Daftar proyek milik pengguna
+      parameters:
+        - in: query
+          name: cursor
+          schema: { type: string }
+      responses:
+        "200": { description: Cursor-paginated projects }
+    post:
+      summary: Buat proyek
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, skillType]
+              properties:
+                title: { type: string, minLength: 1, maxLength: 150 }
+                description: { type: string, maxLength: 10000 }
+                goal: { type: string, maxLength: 10000 }
+                skillType: { type: string, enum: [UI, CODE, ESSAY] }
+      responses:
+        "201": { description: Created project }
+  /projects/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      summary: Perbarui proyek milik pengguna
+      responses:
+        "200": { description: Updated project }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      summary: Hapus proyek milik pengguna
+      responses:
+        "200": { description: Deletion result }
+  /projects/{id}/versions:
+    post:
+      summary: Tambah submission dan antrekan review
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "201": { description: Queued version }
+        "429": { $ref: "#/components/responses/Error" }
+  /projects/{id}/progress:
+    get:
+      summary: Ambil skor lintas versi
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { description: Project score history }
+  /versions/{id}:
+    get:
+      summary: Ambil status dan hasil review
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { description: Version and review }
+  /versions/{id}/retry:
+    post:
+      summary: Ulangi review gagal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { description: Requeued version }
+        "409": { $ref: "#/components/responses/Error" }
+  /reviews/{id}/feedback:
+    post:
+      summary: Simpan feedback review
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "201": { description: Saved feedback }
+  /public/p/{username}:
+    get:
+      security: []
+      summary: Ambil profil dan proyek publik
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Public portfolio }
+        "404": { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Error:
+      description: Standard API error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean, const: false }
+              error:
+                type: object
+                properties:
+                  code: { type: string }
+                  message: { type: string }
+                  details: {}
+              meta:
+                type: object
+                properties:
+                  requestId: { type: string }
+                  timestamp: { type: string, format: date-time }
